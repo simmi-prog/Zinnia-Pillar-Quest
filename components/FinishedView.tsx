@@ -11,7 +11,7 @@ export default function FinishedView({ player }: FinishedViewProps) {
     <div className="max-w-2xl mx-auto p-6">
       <div className="bg-white rounded-xl shadow-lg p-8 text-center">
         <div className="text-6xl mb-4">🎉</div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">You're Done!</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">You are Done!</h1>
         <p className="text-gray-600 mb-6">Great job completing all levels!</p>
 
         <div className="bg-blue-50 rounded-lg p-6 mb-6">
