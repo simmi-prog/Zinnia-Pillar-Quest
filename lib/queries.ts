@@ -2,10 +2,19 @@ import { collection, query, where, orderBy, getDocs, limit } from "firebase/fire
 import { db } from "./firebase";
 import type { Player, Team, Question, LeaderboardEntry } from "./types";
 
-export async function getQuestionByLevel(level: 1 | 2 | 3): Promise<Question | null> {
-  const q = query(collection(db, "questions"), where("level", "==", level), limit(1));
+export async function getQuestion(level: 1 | 2 | 3, questionIndex: number): Promise<Question | null> {
+  const q = query(
+    collection(db, "questions"),
+    where("level", "==", level),
+    where("questionIndex", "==", questionIndex),
+    limit(1)
+  );
   const snapshot = await getDocs(q);
   return snapshot.empty ? null : (snapshot.docs[0].data() as Question);
+}
+
+export async function getQuestionByLevel(level: 1 | 2 | 3): Promise<Question | null> {
+  return getQuestion(level, 0);
 }
 
 export async function getTeamMembers(teamId: string): Promise<Player[]> {
@@ -37,7 +46,6 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const entries: LeaderboardEntry[] = playersSnapshot.docs.map((doc) => {
     const player = doc.data() as Player;
     const team = teamsMap.get(player.teamId);
-
     return {
       playerId: player.playerId,
       name: player.name,
@@ -50,19 +58,13 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   });
 
   entries.sort((a, b) => {
-    if (b.score !== a.score) {
-      return b.score - a.score;
-    }
-
-    const aL3Time = a.level3SubmittedAt?.toMillis() || Infinity;
-    const bL3Time = b.level3SubmittedAt?.toMillis() || Infinity;
-    if (aL3Time !== bL3Time) {
-      return aL3Time - bL3Time;
-    }
-
-    const aL2Time = a.level2SubmittedAt?.toMillis() || Infinity;
-    const bL2Time = b.level2SubmittedAt?.toMillis() || Infinity;
-    return aL2Time - bL2Time;
+    if (b.score !== a.score) return b.score - a.score;
+    const aL3 = a.level3SubmittedAt?.toMillis() || Infinity;
+    const bL3 = b.level3SubmittedAt?.toMillis() || Infinity;
+    if (aL3 !== bL3) return aL3 - bL3;
+    const aL2 = a.level2SubmittedAt?.toMillis() || Infinity;
+    const bL2 = b.level2SubmittedAt?.toMillis() || Infinity;
+    return aL2 - bL2;
   });
 
   return entries;
