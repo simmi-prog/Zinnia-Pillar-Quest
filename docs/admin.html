@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel – Zinnia Pillar Quest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { theme: { extend: { colors: { primary: '#3B82F6', secondary: '#22C55E', danger: '#EF4444' } } } }</script>
+  <link rel="stylesheet" href="./assets/styles.css" />
+</head>
+<body class="min-h-screen bg-gray-50 p-6">
+
+  <!-- Login Screen -->
+  <div id="screen-login" class="min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-sm bg-white rounded-xl shadow-lg p-8">
+      <h1 class="text-2xl font-bold text-gray-900 mb-6 text-center">Admin Access</h1>
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <input id="pwd-input" type="password" placeholder="Enter admin password" required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary" />
+        <p id="login-error" class="text-red-500 text-sm hidden">Incorrect password</p>
+        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-blue-600">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="screen-admin" class="hidden max-w-7xl mx-auto space-y-6">
+
+    <!-- System Health -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-900">System Health</h2>
+        <button onclick="runHealthCheck()" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700">Re-check</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- DB Status -->
+        <div id="health-db" class="p-4 rounded-lg border-2 border-yellow-300 bg-yellow-50">
+          <div class="flex items-center gap-2 mb-1">
+            <span id="health-db-dot" class="w-3 h-3 rounded-full bg-yellow-400 pulse"></span>
+            <span class="font-semibold text-gray-800">Firebase DB</span>
+          </div>
+          <p id="health-db-text" class="text-sm font-medium text-yellow-700">Checking...</p>
+          <p id="health-db-time" class="text-xs text-gray-400 mt-1"></p>
+        </div>
+        <!-- Questions -->
+        <div class="p-4 rounded-lg border-2 border-gray-200 bg-gray-50">
+          <div class="flex items-center gap-2 mb-2">
+            <span id="health-q-dot" class="w-3 h-3 rounded-full bg-gray-400"></span>
+            <span class="font-semibold text-gray-800">Questions</span>
+          </div>
+          <div id="health-questions">
+            <p class="text-sm text-gray-400">Not checked yet</p>
+          </div>
+        </div>
+        <!-- Pages -->
+        <div class="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <span class="font-semibold text-gray-800">Pages</span>
+          </div>
+          <div class="space-y-1">
+            <a href="index.html" class="flex justify-between text-sm text-blue-700 hover:underline"><span>Landing</span><span class="text-gray-400">↗</span></a>
+            <a href="play.html" class="flex justify-between text-sm text-blue-700 hover:underline"><span>Play</span><span class="text-gray-400">↗</span></a>
+            <a href="admin.html" class="flex justify-between text-sm text-blue-700 hover:underline"><span>Admin</span><span class="text-gray-400">↗</span></a>
+            <a href="dashboard.html" class="flex justify-between text-sm text-blue-700 hover:underline"><span>Dashboard</span><span class="text-gray-400">↗</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Admin Panel</h1>
+        <button onclick="refreshAll()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Refresh All</button>
+      </div>
+      <!-- Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <p class="text-sm text-gray-500">Game Status</p>
+          <p id="stat-phase" class="text-2xl font-bold text-blue-600 uppercase">—</p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg">
+          <p class="text-sm text-gray-500">Teams</p>
+          <p id="stat-teams" class="text-2xl font-bold text-green-600">0</p>
+        </div>
+        <div class="bg-purple-50 p-4 rounded-lg">
+          <p class="text-sm text-gray-500">Players</p>
+          <p id="stat-players" class="text-2xl font-bold text-purple-600">0</p>
+        </div>
+        <div class="bg-yellow-50 p-4 rounded-lg">
+          <p class="text-sm text-gray-500">Finished</p>
+          <p id="stat-finished" class="text-2xl font-bold text-yellow-600">0</p>
+        </div>
+      </div>
+      <!-- Buttons -->
+      <div class="flex flex-wrap gap-3">
+        <button id="btn-start" onclick="handleStart()" disabled
+          class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          Start Game
+        </button>
+        <button id="btn-end" onclick="handleEnd()" disabled
+          class="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          End Game
+        </button>
+        <button id="btn-reset" onclick="handleReset()"
+          class="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          Reset Game
+        </button>
+        <button id="btn-seed" onclick="handleSeed()"
+          class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          Seed Questions
+        </button>
+      </div>
+    </div>
+
+    <!-- Teams & Players -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Teams (<span id="teams-count">0</span>)</h2>
+        <div id="teams-list" class="space-y-3 max-h-96 overflow-y-auto">
+          <p class="text-gray-400 text-center py-8">No teams yet</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Players (<span id="players-count">0</span>)</h2>
+        <div id="players-list" class="space-y-2 max-h-96 overflow-y-auto">
+          <p class="text-gray-400 text-center py-8">No players yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { startGame, endGame, resetGame, seedQuestions } from './js/game.js';
+    import { getAllPlayers, getAllTeams, subscribeGameState } from './js/queries.js';
+    import { collection, getDocs, query, where, updateDoc, doc, serverTimestamp }
+      from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+    import { db } from './js/firebase-config.js';
+
+    const ADMIN_PASSWORD = 'admin123';
+    let gameState = null, players = [], teams = [], actionLoading = false;
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    window.handleLogin = function(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('pwd-input').value;
+      if (pwd === ADMIN_PASSWORD) {
+        document.getElementById('screen-login').classList.add('hidden');
+        document.getElementById('screen-admin').classList.remove('hidden');
+        init();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    };
+
+    function init() {
+      subscribeGameState(gs => { gameState = gs; updateGameControls(); });
+      loadData();
+      runHealthCheck();
+    }
+
+    // ── Data ──────────────────────────────────────────────────────────────────
+    async function loadData() {
+      [players, teams] = await Promise.all([getAllPlayers(), getAllTeams()]);
+      renderTeams();
+      renderPlayers();
+    }
+
+    window.refreshAll = function() { loadData(); runHealthCheck(); };
+
+    // ── Health Check ──────────────────────────────────────────────────────────
+    window.runHealthCheck = async function() {
+      const dbEl   = document.getElementById('health-db');
+      const dbDot  = document.getElementById('health-db-dot');
+      const dbText = document.getElementById('health-db-text');
+      const dbTime = document.getElementById('health-db-time');
+      const qEl    = document.getElementById('health-questions');
+      const qDot   = document.getElementById('health-q-dot');
+
+      dbEl.className  = 'p-4 rounded-lg border-2 border-yellow-300 bg-yellow-50';
+      dbDot.className = 'w-3 h-3 rounded-full bg-yellow-400 pulse';
+      dbText.className = 'text-sm font-medium text-yellow-700';
+      dbText.textContent = 'Checking...';
+
+      try {
+        await getDocs(collection(db, 'gameState'));
+
+        dbEl.className  = 'p-4 rounded-lg border-2 border-green-300 bg-green-50';
+        dbDot.className = 'w-3 h-3 rounded-full bg-green-500';
+        dbText.className = 'text-sm font-medium text-green-700';
+        dbText.textContent = 'Connected ✓';
+        dbTime.textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+
+        // Check questions per level
+        const levels = [1, 2, 3];
+        const counts = await Promise.all(levels.map(async lvl => {
+          const snap = await getDocs(query(collection(db, 'questions'), where('level', '==', lvl)));
+          return snap.size;
+        }));
+        const allOk = counts.every(c => c >= 3);
+        qDot.className = 'w-3 h-3 rounded-full ' + (allOk ? 'bg-green-500' : 'bg-red-500');
+        qEl.innerHTML = levels.map((l, i) => `
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">Level ${l}</span>
+            <span class="font-medium ${counts[i] >= 3 ? 'text-green-600' : 'text-red-600'}">
+              ${counts[i]}/3 ${counts[i] >= 3 ? '✓' : '✗ seed needed'}
+            </span>
+          </div>`).join('');
+      } catch (err) {
+        dbEl.className  = 'p-4 rounded-lg border-2 border-red-300 bg-red-50';
+        dbDot.className = 'w-3 h-3 rounded-full bg-red-500';
+        dbText.className = 'text-sm font-medium text-red-700';
+        dbText.textContent = 'Connection Error ✗';
+        dbTime.textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+      }
+    };
+
+    // ── Game Controls ─────────────────────────────────────────────────────────
+    function updateGameControls() {
+      const phase = gameState?.phase;
+      document.getElementById('stat-phase').textContent = phase || '—';
+      document.getElementById('stat-teams').textContent = teams.length;
+      document.getElementById('stat-players').textContent = players.length;
+      document.getElementById('stat-finished').textContent = players.filter(p => p.currentLevel === 'finished').length;
+      document.getElementById('btn-start').disabled = actionLoading || phase !== 'lobby';
+      document.getElementById('btn-end').disabled   = actionLoading || phase !== 'live';
+      document.getElementById('btn-reset').disabled = actionLoading;
+      document.getElementById('btn-seed').disabled  = actionLoading;
+    }
+
+    function setActionLoading(v) {
+      actionLoading = v;
+      updateGameControls();
+    }
+
+    window.handleStart = async function() {
+      if (!confirm('Start the game?')) return;
+      setActionLoading(true);
+      try { await startGame(); } catch { alert('Failed to start game'); } finally { setActionLoading(false); }
+    };
+
+    window.handleEnd = async function() {
+      if (!confirm('End the game?')) return;
+      setActionLoading(true);
+      try { await endGame(); } catch { alert('Failed to end game'); } finally { setActionLoading(false); }
+    };
+
+    window.handleReset = async function() {
+      if (!confirm('Reset the entire game? All teams and players will be deleted!')) return;
+      setActionLoading(true);
+      try { await resetGame(); await loadData(); } catch { alert('Failed to reset'); } finally { setActionLoading(false); }
+    };
+
+    window.handleSeed = async function() {
+      setActionLoading(true);
+      try {
+        await seedQuestions();
+        alert('Questions seeded successfully!');
+        runHealthCheck();
+      } catch { alert('Failed to seed questions'); } finally { setActionLoading(false); }
+    };
+
+    // ── Render Teams & Players ────────────────────────────────────────────────
+    function renderTeams() {
+      document.getElementById('teams-count').textContent = teams.length;
+      const el = document.getElementById('teams-list');
+      if (!teams.length) { el.innerHTML = '<p class="text-gray-400 text-center py-8">No teams yet</p>'; return; }
+      el.innerHTML = teams.map(t => `
+        <div class="border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-gray-900">${t.teamName}</h3>
+            <span class="text-xs bg-gray-100 px-2 py-1 rounded font-mono">${t.teamCode}</span>
+          </div>
+          <p class="text-sm text-gray-500">Level: ${t.currentLevel} | Members: ${t.memberIds.length}
+            ${t.currentLevel === 1 ? `<span class="text-purple-600 ml-1">(L1 Q${(t.level1QuestionIndex ?? 0) + 1}/3)</span>` : ''}
+          </p>
+        </div>`).join('');
+    }
+
+    function renderPlayers() {
+      document.getElementById('players-count').textContent = players.length;
+      document.getElementById('stat-players').textContent = players.length;
+      document.getElementById('stat-finished').textContent = players.filter(p => p.currentLevel === 'finished').length;
+      const el = document.getElementById('players-list');
+      if (!players.length) { el.innerHTML = '<p class="text-gray-400 text-center py-8">No players yet</p>'; return; }
+      el.innerHTML = players.map(p => `
+        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+          <div class="flex-1">
+            <p class="font-medium text-gray-900">${p.name}${p.isCaptain ? ' ⭐' : ''}</p>
+            <p class="text-xs text-gray-400">Level ${p.currentLevel}${typeof p.currentLevel === 'number'
+              ? ` <span class="text-blue-400">(Q${(p.currentQuestionIndex ?? 0) + 1}/3)</span>` : ''}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-blue-600">${p.score}</span>
+            <button onclick="adjustScore('${p.playerId}', ${p.score})"
+              class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded">Edit</button>
+            <button onclick="movePlayer('${p.playerId}', '${p.name.replace(/'/g,"\\'")}' )"
+              class="text-xs bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded">Move</button>
+          </div>
+        </div>`).join('');
+    }
+
+    window.adjustScore = async function(playerId, current) {
+      const v = prompt(`New score for player (current: ${current}):`);
+      if (v === null) return;
+      const score = parseInt(v, 10);
+      if (isNaN(score)) { alert('Invalid score'); return; }
+      try {
+        await updateDoc(doc(db, 'players', playerId), { score });
+        await loadData();
+      } catch { alert('Failed to update score'); }
+    };
+
+    window.movePlayer = async function(playerId, name) {
+      const lvl = prompt(`Move ${name} to level (1, 2, 3, or "finished"):`);
+      if (lvl === null) return;
+      if (!['1','2','3','finished'].includes(lvl)) { alert('Invalid level'); return; }
+      try {
+        const level = lvl === 'finished' ? 'finished' : parseInt(lvl, 10);
+        await updateDoc(doc(db, 'players', playerId), { currentLevel: level, currentQuestionIndex: 0, updatedAt: serverTimestamp() });
+        await loadData();
+      } catch { alert('Failed to move player'); }
+    };
+  </script>
+</body>
+</html>
