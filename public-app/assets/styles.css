@@ -1,0 +1,14 @@
+/* Custom styles beyond Tailwind */
+.hidden { display: none !important; }
+.btn { @apply px-4 py-2 rounded-lg font-semibold transition-colors cursor-pointer; }
+.spinner { border: 3px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; width: 32px; height: 32px; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-dot { height: 8px; flex: 1; border-radius: 4px; transition: background-color 0.3s; }
+.option-btn { width: 100%; text-align: left; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb; background: white; cursor: pointer; font-weight: 500; transition: all 0.15s; }
+.option-btn:hover { border-color: #9ca3af; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+.option-btn.selected-blue { border-color: #3b82f6; background: #eff6ff; }
+.option-btn.selected-orange { border-color: #f97316; background: #fff7ed; }
+.option-btn.selected-purple { border-color: #8b5cf6; background: #f5f3ff; }
+.option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pulse { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }

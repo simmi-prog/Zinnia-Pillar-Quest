@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zinnia Pillar Quest – Play</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { theme: { extend: { colors: { primary: '#3B82F6', secondary: '#22C55E', danger: '#EF4444' } } } }</script>
+  <link rel="stylesheet" href="./assets/styles.css" />
+</head>
+<body class="min-h-screen bg-gray-100">
+
+  <!-- Player Header -->
+  <div id="player-header" class="hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div>
+        <p id="header-player-name" class="text-sm text-gray-700 font-medium"></p>
+        <p id="header-team-name" class="text-xs text-gray-500"></p>
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-gray-500">Score</p>
+        <p id="header-score" class="text-2xl font-bold text-primary">0</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="view-loading" class="min-h-screen flex items-center justify-center">
+    <div class="text-center">
+      <div class="spinner mx-auto mb-4"></div>
+      <p class="text-gray-600 font-medium">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Game Ended -->
+  <div id="view-ended" class="hidden min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+      <div class="text-6xl mb-4">🏁</div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">Game Over!</h1>
+      <p class="text-gray-600 mb-6">Check the dashboard for final results.</p>
+      <div class="bg-blue-50 rounded-lg p-6">
+        <p class="text-sm text-gray-500 mb-1">Your Final Score</p>
+        <p id="ended-score" class="text-5xl font-bold text-primary">0</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lobby -->
+  <div id="view-lobby" class="hidden max-w-2xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow-lg p-8">
+      <div class="text-center mb-8">
+        <h1 id="lobby-team-name" class="text-3xl font-bold text-gray-900 mb-2"></h1>
+        <div id="lobby-team-code" class="inline-block bg-primary text-white px-6 py-3 rounded-lg text-2xl font-mono font-bold tracking-wider"></div>
+        <p class="text-sm text-gray-500 mt-2">Share this code with your teammates</p>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">Team Members</h2>
+      <div id="lobby-members" class="space-y-2 mb-6"></div>
+      <div class="text-center p-4 bg-blue-50 rounded-lg">
+        <div class="spinner mx-auto mb-2"></div>
+        <p class="text-gray-600 font-medium">Waiting for admin to start the game...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level 1: Team Up -->
+  <div id="view-level1" class="hidden max-w-3xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow-lg p-8">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-2xl font-bold text-gray-900">Level 1: Team Up 🤝</h2>
+        <span id="l1-q-counter" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">Q1 of 3</span>
+      </div>
+      <p id="l1-role-msg" class="text-sm text-gray-500 mb-4"></p>
+
+      <!-- Progress bar -->
+      <div class="flex gap-2 mb-6">
+        <div id="l1-p0" class="progress-dot bg-gray-200"></div>
+        <div id="l1-p1" class="progress-dot bg-gray-200"></div>
+        <div id="l1-p2" class="progress-dot bg-gray-200"></div>
+      </div>
+
+      <!-- Team members -->
+      <div class="mb-5 p-4 bg-gray-50 rounded-lg">
+        <p id="l1-team-name" class="font-semibold text-gray-900 mb-2"></p>
+        <div id="l1-members" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Question prompt -->
+      <h3 id="l1-prompt" class="text-lg font-semibold text-gray-900 mb-4 whitespace-pre-line leading-relaxed"></h3>
+      <div id="l1-no-question" class="hidden p-3 mb-4 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+        Questions are not available for this level yet. Ask admin to click "Seed Questions" in admin.html.
+      </div>
+
+      <!-- Text input (Q1/Q2) -->
+      <div id="l1-text-input" class="hidden mb-5">
+        <input id="l1-text-answer" type="text" placeholder="Type your answer here..."
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 outline-none text-lg" />
+        <p class="text-xs text-gray-400 mt-1">Answer is not case-sensitive</p>
+      </div>
+
+      <!-- MCQ options (Q3) -->
+      <div id="l1-options" class="hidden space-y-3 mb-5"></div>
+
+      <!-- Non-captain wait message -->
+      <div id="l1-wait-msg" class="hidden p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center mb-4">
+        <p class="text-yellow-800 font-medium">Waiting for your captain to answer...</p>
+      </div>
+
+      <!-- Captain submit button -->
+      <button id="l1-submit-btn" class="hidden w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        onclick="handleL1Submit()">Submit & Next Question →</button>
+    </div>
+  </div>
+
+  <!-- Level 2: Be Bold -->
+  <div id="view-level2" class="hidden max-w-3xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow-lg p-8">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-2xl font-bold text-gray-900">Level 2: Be Bold ⚡</h2>
+        <span id="l2-q-counter" class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">Q1 of 3</span>
+      </div>
+      <p class="text-gray-500 text-sm mb-4">Choose your risk level for each question</p>
+
+      <!-- Progress bar -->
+      <div class="flex gap-2 mb-6">
+        <div id="l2-p0" class="progress-dot bg-gray-200"></div>
+        <div id="l2-p1" class="progress-dot bg-gray-200"></div>
+        <div id="l2-p2" class="progress-dot bg-gray-200"></div>
+      </div>
+
+      <!-- Mode selector -->
+      <div id="l2-mode-selector">
+        <h3 id="l2-mode-heading" class="text-lg font-semibold text-gray-900 mb-4">Choose Your Strategy for Q1</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button onclick="selectL2Mode('safe')"
+            class="p-6 border-2 border-green-400 rounded-xl hover:bg-green-50 hover:shadow-md transition-all text-left">
+            <div class="text-3xl mb-2">🛡️</div>
+            <h4 class="font-bold text-lg mb-1">Be Safe</h4>
+            <p class="text-sm text-gray-600">Correct: +15 pts | Wrong: 0 pts</p>
+            <p class="text-xs text-gray-400 mt-1">Low risk, steady progress</p>
+          </button>
+          <button onclick="selectL2Mode('bold')"
+            class="p-6 border-2 border-orange-400 rounded-xl hover:bg-orange-50 hover:shadow-md transition-all text-left">
+            <div class="text-3xl mb-2">⚡</div>
+            <h4 class="font-bold text-lg mb-1">Be Bold</h4>
+            <p class="text-sm text-gray-600">Correct: +30 pts | Wrong: −10 pts</p>
+            <p class="text-xs text-gray-400 mt-1">High risk, high reward</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- Question + answer -->
+      <div id="l2-question-area" class="hidden">
+        <div class="mb-4 p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+          <p class="text-sm text-gray-600">Mode: <span id="l2-mode-label" class="font-bold"></span></p>
+          <button onclick="resetL2Mode()" class="text-xs text-gray-400 hover:text-gray-600 underline">Change</button>
+        </div>
+        <h3 id="l2-prompt" class="text-lg font-semibold text-gray-900 mb-4 whitespace-pre-line leading-relaxed"></h3>
+        <div id="l2-no-question" class="hidden p-3 mb-4 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+          Questions are not available for this level yet. Ask admin to click "Seed Questions" in admin.html.
+        </div>
+        <div id="l2-options" class="space-y-3 mb-5"></div>
+        <button id="l2-submit-btn" onclick="handleL2Submit()"
+          class="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          Submit Answer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level 3: Deliver Value -->
+  <div id="view-level3" class="hidden max-w-3xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow-lg p-8">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-2xl font-bold text-gray-900">Level 3: Deliver Value 🎯</h2>
+        <span id="l3-q-counter" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">Q1 of 3</span>
+      </div>
+      <p class="text-gray-500 text-sm mb-1">Speed matters — first correct answers earn the most!</p>
+      <div class="inline-flex gap-3 text-xs text-gray-500 bg-gray-50 px-3 py-1 rounded-full mb-4">
+        <span>1st ✓ = +35</span><span>2nd ✓ = +30</span><span>3rd ✓ = +25</span><span>Others ✓ = +20</span>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="flex gap-2 mb-6">
+        <div id="l3-p0" class="progress-dot bg-gray-200"></div>
+        <div id="l3-p1" class="progress-dot bg-gray-200"></div>
+        <div id="l3-p2" class="progress-dot bg-gray-200"></div>
+      </div>
+
+      <h3 id="l3-prompt" class="text-lg font-semibold text-gray-900 mb-4 whitespace-pre-line leading-relaxed"></h3>
+      <div id="l3-no-question" class="hidden p-3 mb-4 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+        Questions are not available for this level yet. Ask admin to click "Seed Questions" in admin.html.
+      </div>
+      <div id="l3-options" class="space-y-3 mb-5"></div>
+      <button id="l3-submit-btn" onclick="handleL3Submit()"
+        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        Submit Answer
+      </button>
+    </div>
+  </div>
+
+  <!-- Finished -->
+  <div id="view-finished" class="hidden max-w-2xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+      <div class="text-6xl mb-4">🎉</div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">You're Done!</h1>
+      <p class="text-gray-500 mb-6">Great job completing all levels!</p>
+      <div class="bg-blue-50 rounded-lg p-6 mb-4">
+        <p class="text-sm text-gray-500 mb-1">Your Score</p>
+        <p id="finished-score" class="text-5xl font-bold text-primary">0</p>
+      </div>
+      <p class="text-gray-400 text-sm">Watch the dashboard for the final leaderboard!</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getPlayer, getTeam, submitLevel1, submitLevel2, submitLevel3 } from './js/game.js';
+    import { getQuestion, getTeamMembers, subscribePlayer, subscribeTeam, subscribeGameState } from './js/queries.js';
+    import { updateDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+    import { db } from './js/firebase-config.js';
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    let player = null, team = null, gameState = null;
+    let isSubmitting = false;
+    const questionCache = {};
+
+    // Level-local state
+    let l1SelectedOption = '', l1TextAnswer = '';
+    let l2QIdx = -1, l2Mode = null, l2SelectedOption = '';
+    let l3QIdx = -1, l3SelectedOption = '';
+
+    // ── Redirect if no session ─────────────────────────────────────────────────
+    const playerId = localStorage.getItem('playerId');
+    const teamId   = localStorage.getItem('teamId');
+    if (!playerId || !teamId) { window.location.href = 'index.html'; }
+
+    // ── Load initial data then set up listeners ────────────────────────────────
+    async function boot() {
+      player = await getPlayer(playerId);
+      team   = await getTeam(teamId);
+      if (!player || !team) {
+        localStorage.clear();
+        window.location.href = 'index.html';
+        return;
+      }
+      render();
+
+      subscribePlayer(playerId, p => { player = p; render(); });
+      subscribeTeam(teamId, t => { team = t; render(); });
+      subscribeGameState(gs => {
+        gameState = gs;
+        if (gs?.phase === 'live' && gs.gameEndTime) {
+          const now = Date.now(), end = gs.gameEndTime.toMillis();
+          if (now >= end) {
+            updateDoc(doc(db, 'gameState', 'current'), { phase: 'ended', updatedAt: serverTimestamp() })
+              .catch(console.error);
+          }
+        }
+        render();
+      });
+    }
+    boot();
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function showView(id) {
+      ['view-loading','view-ended','view-lobby','view-level1','view-level2','view-level3','view-finished']
+        .forEach(v => document.getElementById(v).classList.toggle('hidden', v !== id));
+    }
+
+    async function loadQuestion(level, qi) {
+      const key = `${level}-${qi}`;
+      if (!questionCache[key]) {
+        try {
+          questionCache[key] = await getQuestion(level, qi);
+        } catch (err) {
+          console.error('Failed loading question', { level, qi, err });
+          questionCache[key] = null;
+        }
+      }
+      return questionCache[key];
+    }
+
+    function updateHeader() {
+      if (!player || !team) return;
+      document.getElementById('player-header').classList.remove('hidden');
+      document.getElementById('header-player-name').textContent = player.name + (player.isCaptain ? ' ⭐' : '');
+      document.getElementById('header-team-name').textContent   = 'Team: ' + team.teamName;
+      document.getElementById('header-score').textContent       = player.score ?? 0;
+    }
+
+    function updateProgressBar(prefix, qIdx) {
+      [0,1,2].forEach(i => {
+        const el = document.getElementById(`${prefix}-p${i}`);
+        el.style.backgroundColor = i < qIdx ? '#22c55e' : i === qIdx ? (prefix==='l1' ? '#8b5cf6' : prefix==='l2' ? '#f97316' : '#3b82f6') : '#e5e7eb';
+      });
+    }
+
+    // ── Main Render ─────────────────────────────────────────────────────────────
+    function render() {
+      updateHeader();
+      if (!player || !team) return;
+
+      if (!gameState || gameState.phase === 'lobby') { renderLobby(); return; }
+      if (gameState.phase === 'ended') { renderEnded(); return; }
+
+      // live
+      if (player.currentLevel === 'finished') { renderFinished(); return; }
+      if (player.currentLevel === 1) { renderLevel1(); return; }
+      if (player.currentLevel === 2) { renderLevel2(); return; }
+      if (player.currentLevel === 3) { renderLevel3(); return; }
+    }
+
+    // ── Lobby ──────────────────────────────────────────────────────────────────
+    async function renderLobby() {
+      showView('view-lobby');
+      document.getElementById('lobby-team-name').textContent = team.teamName;
+      document.getElementById('lobby-team-code').textContent = team.teamCode;
+      const members = await getTeamMembers(team.teamId);
+      document.getElementById('lobby-members').innerHTML = members.map(m => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <span class="font-medium text-gray-900">${m.name}</span>
+          ${m.isCaptain ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">CAPTAIN</span>' : ''}
+        </div>`).join('');
+    }
+
+    function renderEnded() {
+      showView('view-ended');
+      document.getElementById('ended-score').textContent = player.score ?? 0;
+    }
+
+    function renderFinished() {
+      showView('view-finished');
+      document.getElementById('finished-score').textContent = player.score ?? 0;
+    }
+
+    // ── Level 1 ────────────────────────────────────────────────────────────────
+    async function renderLevel1() {
+      showView('view-level1');
+      const qIdx = team.level1QuestionIndex ?? 0;
+      updateProgressBar('l1', qIdx);
+      document.getElementById('l1-q-counter').textContent = `Q${qIdx + 1} of 3`;
+      document.getElementById('l1-role-msg').textContent = player.isCaptain
+        ? 'You are captain — submit the answer for your team'
+        : 'Your captain is answering — watch the progress bar update';
+      document.getElementById('l1-team-name').textContent = 'Team: ' + team.teamName;
+
+      // Members
+      const members = await getTeamMembers(team.teamId);
+      document.getElementById('l1-members').innerHTML = members.map(m =>
+        `<span class="text-xs bg-white px-2 py-1 rounded-full border border-gray-200">${m.name}${m.isCaptain ? ' ⭐' : ''}</span>`
+      ).join('');
+
+      const q = await loadQuestion(1, qIdx);
+      const noQuestion = document.getElementById('l1-no-question');
+      if (!q || !q.prompt) {
+        document.getElementById('l1-prompt').textContent = '';
+        noQuestion.classList.remove('hidden');
+        document.getElementById('l1-text-input').classList.add('hidden');
+        document.getElementById('l1-options').classList.add('hidden');
+        document.getElementById('l1-submit-btn').classList.add('hidden');
+        return;
+      }
+      noQuestion.classList.add('hidden');
+      document.getElementById('l1-prompt').textContent = q.prompt;
+
+      const textDiv  = document.getElementById('l1-text-input');
+      const optsDiv  = document.getElementById('l1-options');
+      const waitMsg  = document.getElementById('l1-wait-msg');
+      const submitBtn = document.getElementById('l1-submit-btn');
+      const textInput = document.getElementById('l1-text-answer');
+
+      textDiv.classList.add('hidden');
+      optsDiv.classList.add('hidden');
+      waitMsg.classList.add('hidden');
+      submitBtn.classList.add('hidden');
+
+      if (q.inputType === 'text') {
+        textDiv.classList.remove('hidden');
+        textInput.disabled = !player.isCaptain || isSubmitting;
+        if (!player.isCaptain) textInput.value = '';
+        textInput.placeholder = player.isCaptain ? 'Type your answer here...' : 'Waiting for captain...';
+      } else {
+        optsDiv.classList.remove('hidden');
+        optsDiv.innerHTML = q.options.map(opt => `
+          <button class="option-btn ${l1SelectedOption === opt ? 'selected-purple' : ''}"
+            onclick="selectL1Option(this, '${opt.replace(/'/g,"\\'")}')">
+            ${opt}
+          </button>`).join('');
+        if (!player.isCaptain) optsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
+      }
+
+      if (!player.isCaptain) {
+        waitMsg.classList.remove('hidden');
+      } else {
+        submitBtn.classList.remove('hidden');
+        submitBtn.textContent = qIdx < 2 ? 'Submit & Next Question →' : 'Submit Final Answer ✓';
+        submitBtn.disabled = isSubmitting;
+      }
+    }
+
+    window.selectL1Option = function(btn, opt) {
+      if (!player.isCaptain || isSubmitting) return;
+      l1SelectedOption = opt;
+      document.getElementById('l1-options').querySelectorAll('.option-btn')
+        .forEach(b => b.classList.remove('selected-purple'));
+      btn.classList.add('selected-purple');
+    };
+
+    window.handleL1Submit = async function() {
+      const qIdx = team.level1QuestionIndex ?? 0;
+      const q = await loadQuestion(1, qIdx);
+      const answer = q?.inputType === 'text'
+        ? document.getElementById('l1-text-answer').value.trim()
+        : l1SelectedOption;
+      if (!answer || isSubmitting) return;
+
+      isSubmitting = true;
+      l1SelectedOption = '';
+      document.getElementById('l1-submit-btn').disabled = true;
+      document.getElementById('l1-submit-btn').textContent = 'Submitting...';
+      try {
+        await submitLevel1(team.teamId, player.playerId, answer, qIdx);
+      } catch (err) {
+        alert(err.message || 'Failed to submit');
+      } finally {
+        isSubmitting = false;
+      }
+    };
+
+    // ── Level 2 ────────────────────────────────────────────────────────────────
+    async function renderLevel2() {
+      showView('view-level2');
+      const qIdx = player.currentQuestionIndex ?? 0;
+
+      // Reset local state when question changes
+      if (qIdx !== l2QIdx) {
+        l2QIdx = qIdx;
+        l2Mode = null;
+        l2SelectedOption = '';
+      }
+
+      updateProgressBar('l2', qIdx);
+      document.getElementById('l2-q-counter').textContent = `Q${qIdx + 1} of 3`;
+      document.getElementById('l2-mode-heading').textContent = `Choose Your Strategy for Q${qIdx + 1}`;
+
+      if (!l2Mode) {
+        document.getElementById('l2-mode-selector').classList.remove('hidden');
+        document.getElementById('l2-question-area').classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('l2-mode-selector').classList.add('hidden');
+      document.getElementById('l2-question-area').classList.remove('hidden');
+
+      const modeLabel = document.getElementById('l2-mode-label');
+      modeLabel.textContent = l2Mode === 'safe' ? 'Be Safe 🛡️ (+15 / 0)' : 'Be Bold ⚡ (+30 / −10)';
+      modeLabel.className = 'font-bold ' + (l2Mode === 'safe' ? 'text-green-600' : 'text-orange-600');
+
+      const q = await loadQuestion(2, qIdx);
+      const l2NoQuestion = document.getElementById('l2-no-question');
+      if (!q || !q.prompt || !Array.isArray(q.options)) {
+        document.getElementById('l2-prompt').textContent = '';
+        document.getElementById('l2-options').innerHTML = '';
+        l2NoQuestion.classList.remove('hidden');
+        document.getElementById('l2-submit-btn').disabled = true;
+        return;
+      }
+      l2NoQuestion.classList.add('hidden');
+      document.getElementById('l2-prompt').textContent = q.prompt;
+
+      document.getElementById('l2-options').innerHTML = q.options.map(opt => `
+        <button class="option-btn ${l2SelectedOption === opt ? 'selected-orange' : ''}"
+          onclick="selectL2Option(this, '${opt.replace(/'/g,"\\'")}')">
+          ${opt}
+        </button>`).join('');
+
+      const btn = document.getElementById('l2-submit-btn');
+      btn.disabled = !l2SelectedOption || isSubmitting;
+      btn.textContent = isSubmitting ? 'Submitting...' : qIdx < 2 ? 'Submit & Next Question →' : 'Submit Final Answer ✓';
+    }
+
+    window.selectL2Mode = function(mode) { l2Mode = mode; renderLevel2(); };
+    window.resetL2Mode  = function()     { l2Mode = null; renderLevel2(); };
+    window.selectL2Option = function(btn, opt) {
+      if (isSubmitting) return;
+      l2SelectedOption = opt;
+      document.getElementById('l2-options').querySelectorAll('.option-btn')
+        .forEach(b => b.classList.remove('selected-orange'));
+      btn.classList.add('selected-orange');
+      document.getElementById('l2-submit-btn').disabled = false;
+    };
+
+    window.handleL2Submit = async function() {
+      if (!l2SelectedOption || !l2Mode || isSubmitting) return;
+      isSubmitting = true;
+      document.getElementById('l2-submit-btn').disabled = true;
+      document.getElementById('l2-submit-btn').textContent = 'Submitting...';
+      try {
+        await submitLevel2(player.playerId, l2SelectedOption, l2Mode, l2QIdx);
+      } catch (err) {
+        alert(err.message || 'Failed to submit');
+      } finally {
+        isSubmitting = false;
+      }
+    };
+
+    // ── Level 3 ────────────────────────────────────────────────────────────────
+    async function renderLevel3() {
+      showView('view-level3');
+      const qIdx = player.currentQuestionIndex ?? 0;
+
+      if (qIdx !== l3QIdx) {
+        l3QIdx = qIdx;
+        l3SelectedOption = '';
+      }
+
+      updateProgressBar('l3', qIdx);
+      document.getElementById('l3-q-counter').textContent = `Q${qIdx + 1} of 3`;
+
+      const q = await loadQuestion(3, qIdx);
+      const l3NoQuestion = document.getElementById('l3-no-question');
+      if (!q || !q.prompt || !Array.isArray(q.options)) {
+        document.getElementById('l3-prompt').textContent = '';
+        document.getElementById('l3-options').innerHTML = '';
+        l3NoQuestion.classList.remove('hidden');
+        document.getElementById('l3-submit-btn').disabled = true;
+        return;
+      }
+      l3NoQuestion.classList.add('hidden');
+      document.getElementById('l3-prompt').textContent = q.prompt;
+
+      document.getElementById('l3-options').innerHTML = q.options.map(opt => `
+        <button class="option-btn ${l3SelectedOption === opt ? 'selected-blue' : ''}"
+          onclick="selectL3Option(this, '${opt.replace(/'/g,"\\'")}')">
+          ${opt}
+        </button>`).join('');
+
+      const btn = document.getElementById('l3-submit-btn');
+      btn.disabled = !l3SelectedOption || isSubmitting;
+      btn.textContent = isSubmitting ? 'Submitting...' : qIdx < 2 ? 'Submit & Next Question →' : 'Submit Final Answer ✓';
+    }
+
+    window.selectL3Option = function(btn, opt) {
+      if (isSubmitting) return;
+      l3SelectedOption = opt;
+      document.getElementById('l3-options').querySelectorAll('.option-btn')
+        .forEach(b => b.classList.remove('selected-blue'));
+      btn.classList.add('selected-blue');
+      document.getElementById('l3-submit-btn').disabled = false;
+    };
+
+    window.handleL3Submit = async function() {
+      if (!l3SelectedOption || isSubmitting) return;
+      isSubmitting = true;
+      document.getElementById('l3-submit-btn').disabled = true;
+      document.getElementById('l3-submit-btn').textContent = 'Submitting...';
+      try {
+        await submitLevel3(player.playerId, l3SelectedOption, l3QIdx);
+      } catch (err) {
+        alert(err.message || 'Failed to submit');
+      } finally {
+        isSubmitting = false;
+      }
+    };
+  </script>
+</body>
+</html>
